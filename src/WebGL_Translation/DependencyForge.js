@@ -7,6 +7,13 @@
  * Code is individual functions. Use @export and @import to define modules. The program will remove the annotations and assemble the progam.
  */
 
+function generateHeader(name, length) {
+    const spacingLength = (length - name.length) / 2;
+    const spacing = '-'.repeat(Math.floor(spacingLength));
+    const evenSpacing = spacingLength === Math.floor(spacingLength);
+    return '/*' + spacing + (evenSpacing ? " " : "- ") + name + " " + spacing + '*/\n'
+}
+
 class CiruclarDependencyError extends Error {
   constructor(module) {
     super(`Adding "${module.shaderExport}" would cause a circular dependency.`); 
@@ -15,11 +22,18 @@ class CiruclarDependencyError extends Error {
   }
 }
 
-function generateHeader(name, length) {
-    const spacingLength = (length - name.length) / 2;
-    const spacing = '-'.repeat(Math.floor(spacingLength));
-    const evenSpacing = spacingLength === Math.floor(spacingLength);
-    return '/*' + spacing + (evenSpacing ? " " : "- ") + name + " " + spacing + '*/\n'
+class UndelcaredExportError extends Error {
+    constructor(program) {
+        const maxLength = Math.max(20, ...program.split('\n').map(line => line.length))+4;
+        super(`The following program does not have a export available:\n${generateHeader('Program', maxLength)}\n${program}\n${generateHeader('', maxLength)}`)
+    }
+}
+
+class ImportDoesNotExist extends Error {
+    constructor(module, nonexistantImport) {
+        super(`The module "${module.shaderExport}" is expecting "${nonexistantImport}" which does not exist.`);
+        this.module = module;
+    }
 }
 
 const getFragmentShader = (modules, main, options = {}) => {
@@ -40,27 +54,48 @@ export default function DependencyForge(){
 }
 
 DependencyForge.prototype.registerShaderDependency = function(fSource){
-    const lines = fSource.split('\n');
+    let lines = fSource.split('\n');
 
-    // Get all the indecies where the line starts with '@' AKA annotations
-    const libNotesIndecies = lines.map((line, index) => line[0] === '@' ? index : -1).filter(v => v !== -1);
-    let shaderExport;
+    let shaderExport = null;
+    let exportType = null;
     let shaderImport = [];
 
-    // Process the annotations statements
-    for(let i of libNotesIndecies.reverse()){
-        let annotation = lines.splice(i, 1)[0];
-        if(annotation.startsWith('@import ')) shaderImport.push(annotation.substring(8).trim())
-        if(annotation.startsWith('@export ')) shaderExport = annotation.substring(8).trim()
-    }
+    // Search for the word "import " or the word "export ", and to the list of dependecies
+    lines = lines.map(line => {
+        //Cleanup
+        if(line.trim().length===0) return '';
+
+        // use export <functype> <funcname>(<args>){ ... }
+        if(line.startsWith('export ')) {
+            let exportFuncDecl = line.substring(line.indexOf('export ') + 7, line.length).trim();
+            let splitIndex1 = exportFuncDecl.indexOf(' ');
+            let splitIndex2 = exportFuncDecl.indexOf('(');
+            exportType = exportFuncDecl.substring(0, splitIndex1).trim();
+            shaderExport = exportFuncDecl.substring(splitIndex1, splitIndex2).trim();
+            return exportFuncDecl;
+        }
+
+        // use import <funcname>
+        if(line.startsWith('import ')) {
+            let importFunc = line.substring(line.indexOf('import ') + 7, line.length).trim();
+            shaderImport.push(importFunc);
+            return '';
+        }
+
+        return line;
+    });
 
     // Remove leading new lines
     while(lines.length > 0 && lines[0].trim() === '') lines.shift();
+
+    // If missing export module, throw error
+    if(shaderExport === null) throw new UndelcaredExportError(fSource);
 
     // Add the program to the list of dependencies
     this.dependencies[shaderExport] = {
         shaderProgram: lines.join('\n'), 
         shaderExport,
+        exportType,
         shaderImport
     }
 
@@ -69,13 +104,20 @@ DependencyForge.prototype.registerShaderDependency = function(fSource){
 }
 
 DependencyForge.prototype.build = function(main, options={}){
+    // Basic Idea: recurisvly insert dependencies depth first - 
+    //  To the left: parent & unprocessed peer nodes
+    //  To the right: all dependencies
+
     // Start with the main, recursivly get functions
     let dependencyOrder = [];
 
     // Recursivly add dependencies
-    let fillDependencyOrder = (moduleName, index) => {
-        let module = this.dependencies[moduleName];
+    let fillDependencyOrder = (moduleName, index, parent) => {
+        // Check to see if dependency exists
+        if(!Object.keys(this.dependencies).includes(moduleName)) throw new ImportDoesNotExist(parent, moduleName);
 
+        // Get the dependency and check for circles
+        let module = this.dependencies[moduleName];
         let includedIndex = dependencyOrder.indexOf(module)
         if(includedIndex !== -1){
             if(index<includedIndex) return;
@@ -87,11 +129,11 @@ DependencyForge.prototype.build = function(main, options={}){
 
         // Loop over all the dependencies
         for(let child of module.shaderImport){
-            fillDependencyOrder(child, index+1);
+            fillDependencyOrder(child, index, module);
         }
     }
-    fillDependencyOrder(main, 0);
+    fillDependencyOrder(main, 0, null);
 
     // Fill in information
-    return getFragmentShader(dependencyOrder, main, options);
+    return getFragmentShader(dependencyOrder.reverse(), main, options);
 }

@@ -9,15 +9,13 @@ const gl = canvas.getContext("webgl");
 const df = new DependencyForge();
 
 df.registerShaderDependency(`
-@export red
-
-vec4 red(){
-    return vec4(1.0, 0.0, 0.0, 1.0);
+export vec4 red(){
+    return vec4(1.0, 1.0, 0.0, 1.0);
 }
 `);
 
 const code = df.build("red");
-
+console.log(code)
 // Render the program
 const program = new Program(gl, code);
 program.execute(null, null, canvas.clientWidth, canvas.clientHeight);

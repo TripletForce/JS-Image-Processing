@@ -9,31 +9,13 @@ const gl = canvas.getContext("webgl");
 const df = new DependencyForge();
 
 df.registerShaderDependency(`
-@export hash
-
-float hash(vec2 p) {
-    // a classic sin(dot()) hash
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-}
-`);
-
-df.registerShaderDependency(`
-@export rand
-
- rand(){
-
-}
-`);
-
-df.registerShaderDependency(`
-@export red
-
-vec4 red(){
-    return vec4(1.0, 0.0, 0.0, 1.0);
+export vec4 red(){
+    return vec4(1.0, 1.0, 0.0, 1.0);
 }
 `);
 
 const code = df.build("red");
+console.log(code)
 
 // Render the program
 const program = new Program(gl, code);
