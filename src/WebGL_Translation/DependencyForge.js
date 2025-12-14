@@ -7,6 +7,8 @@
  * Code is individual functions. Use @export and @import to define modules. The program will remove the annotations and assemble the progam.
  */
 
+import LIBRARIES from './Library.js'
+
 function generateHeader(name, length) {
     const spacingLength = (length - name.length) / 2;
     const spacing = '-'.repeat(Math.floor(spacingLength));
@@ -36,21 +38,40 @@ class ImportDoesNotExist extends Error {
     }
 }
 
-const getFragmentShader = (modules, main, options = {}) => {
+const getFragmentShader = (modules, main, exportType, options = {}) => {
+    let callExecution = null;
+    switch(exportType){
+        case 'float':
+            callExecution = `\tfloat v = ${main}();\n\tgl_FragColor = vec4(v,v,v,1.0);`
+            break;
+        case 'vec2':
+            callExecution = `vec2 v = ${main}();\n\tgl_FragColor = vec4(v,0.0,1.0);`
+        case 'vec2':
+            callExecution = `vec2 v = ${main}();\n\tgl_FragColor = vec4(v,1.0);`
+        case 'vec4':
+            callExecution = `\tgl_FragColor = ${main}();`;
+            break;
+        case 'boolean':
+        case 'int':
+        case 'uint':
+        default:
+            //TODO: throw error
+    }
+
     const maxLength = Math.max(20, ...modules.map(m => m.shaderExport.length))+4;
     return `
 precision ${options.presision || "mediump"} float;
 varying vec2 vUV;
 uniform sampler2D uTexture;
 \n${modules.map(module => generateHeader(module.shaderExport, maxLength)+module.shaderProgram).join("\n")}
-void main() {
-    gl_FragColor = ${main}();
-}
-    `
+void main() {\n${callExecution}\n}
+    `.trim();
 }
 
 export default function DependencyForge(){
     this.dependencies = {};
+   
+    for(let lib of LIBRARIES) this.registerShaderDependency(lib);
 }
 
 DependencyForge.prototype.registerShaderDependency = function(fSource){
@@ -82,6 +103,11 @@ DependencyForge.prototype.registerShaderDependency = function(fSource){
             return '';
         }
 
+        // use overload <functype> <funcname>(<args>){ ... }
+        if(line.startsWith('overload ')){
+            return line.substring(line.indexOf('overload ') + 9, line.length).trim();
+        }
+
         return line;
     });
 
@@ -90,6 +116,10 @@ DependencyForge.prototype.registerShaderDependency = function(fSource){
 
     // If missing export module, throw error
     if(shaderExport === null) throw new UndelcaredExportError(fSource);
+
+    // Conflicting export names, throw error
+    // TODO: fix
+    //if(this.dependencies.includes(shaderExport)) throw new ConflictingExportError(shaderExport);
 
     // Add the program to the list of dependencies
     this.dependencies[shaderExport] = {
@@ -135,5 +165,5 @@ DependencyForge.prototype.build = function(main, options={}){
     fillDependencyOrder(main, 0, null);
 
     // Fill in information
-    return getFragmentShader(dependencyOrder.reverse(), main, options);
+    return getFragmentShader(dependencyOrder.reverse(), main, this.dependencies[main].exportType, options);
 }

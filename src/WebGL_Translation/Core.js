@@ -64,7 +64,14 @@ function getScreenQuad(gl){
     return positionBuffer;
 }
 
-export function Program(gl, fSource) {
+export function Program(gl, fSource, debug=false) {
+    if(debug = true){
+        console.log(fSource.split('\n').map((l,i) => {
+            const width = 5;
+            return `${String(i+1).padStart(width, ' ')}: ${l}`
+        }).join('\n'));
+    }
+
     const vs = createShader(gl, gl.VERTEX_SHADER, vShader);
     const fs = createShader(gl, gl.FRAGMENT_SHADER, fSource);
 

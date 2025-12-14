@@ -9,14 +9,15 @@ const gl = canvas.getContext("webgl");
 const df = new DependencyForge();
 
 df.registerShaderDependency(`
-export vec4 red(){
-    return vec4(1.0, 1.0, 0.0, 1.0);
-}
+import random
+export float random_pixels(){
+    return random(vUV) > 0.5 ? 1.0 : 0.0;
+}    
 `);
 
-const code = df.build("red");
-console.log(code)
+const code = df.build("random_pixels");
+
 
 // Render the program
-const program = new Program(gl, code);
+const program = new Program(gl, code, true);
 program.execute(null, null, canvas.clientWidth, canvas.clientHeight);
