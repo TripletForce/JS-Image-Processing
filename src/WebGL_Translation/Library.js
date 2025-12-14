@@ -23,5 +23,9 @@ overload float random(vec4 v){
     float r2 = base_random(vec2(v.z, v.w));
     return base_random(vec2(r1, r2)); 
 }
+`,`
+export vec4 pass(){
+    return texture2D(uTexture, vUV);
+}
 `
 ];

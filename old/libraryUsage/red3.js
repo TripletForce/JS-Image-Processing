@@ -51,35 +51,18 @@ export float game_of_life() {
 }
 `);
 
-
-let buff1 = new Buffer(gl, canvas.width, canvas.height);
-let buff2 = new Buffer(gl, canvas.width, canvas.height);
-
-const background_program = new Program(gl, df.build("random_pixels"));
-const game_program = new Program(gl, df.build("game_of_life"));
-const pass_program = new Program(gl, df.build("pass"));
-
-
-background_program.execute(null, buff1, canvas.width, canvas.height);
-
-function render(b){
-    if(b){
-        game_program.execute(buff1, buff2, canvas.width, canvas.height, { uTexelSize: [1/canvas.width, 1/canvas.height] });
-        pass_program.execute(buff2, null, canvas.width, canvas.height);
-    }
-    else{
-        game_program.execute(buff2, buff1, canvas.width, canvas.height, { uTexelSize: [1/canvas.width, 1/canvas.height] });
-        pass_program.execute(buff1, null, canvas.width, canvas.height);
-    }
+df.registerShaderDependency(`
+export vec4 red(){
+    return vec4(1.0, 0.0, 0.0, 1.0);
 }
+`);
 
-function a(){
-    render(true);
-    requestAnimationFrame(b)
-}
-function b(){
-    render(false);
-    requestAnimationFrame(a)
-}
+let buffer = new Buffer(gl, canvas.clientWidth, canvas.clientHeight);
 
-requestAnimationFrame(a)
+
+
+const red_program = new Program(gl, df.build("red"), true);
+const pass_program = new Program(gl, df.build("pass"), true);
+
+red_program.execute(null, buffer, canvas.width, canvas.height);
+pass_program.execute(buffer, null, canvas.width, canvas.height);

@@ -65,7 +65,7 @@ function getScreenQuad(gl){
 }
 
 export function Program(gl, fSource, debug=false) {
-    if(debug = true){
+    if(debug === true){
         console.log(fSource.split('\n').map((l,i) => {
             const width = 5;
             return `${String(i+1).padStart(width, ' ')}: ${l}`
@@ -108,7 +108,20 @@ export function Program(gl, fSource, debug=false) {
         }
 
         // Set uniforms. All uniforms must be set here.
-        Object.keys(uniforms).forEach(key => gl.uniform1f(gl.getUniformLocation(program, key), uniforms[key]));
+        Object.keys(uniforms).forEach(key => {
+            const loc = gl.getUniformLocation(program, key);
+            const v = uniforms[key];
+
+            if (typeof v === "number") {
+                gl.uniform1f(loc, v);
+            } else if (v.length === 2) {
+                gl.uniform2f(loc, v[0], v[1]);
+            } else if (v.length === 3) {
+                gl.uniform3f(loc, v[0], v[1], v[2]);
+            } else if (v.length === 4) {
+                gl.uniform4f(loc, v[0], v[1], v[2], v[3]);
+            }
+        });
 
         // perform draw
         gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -124,6 +137,9 @@ export function Buffer(gl, width, height) {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0); // mip level 0
 

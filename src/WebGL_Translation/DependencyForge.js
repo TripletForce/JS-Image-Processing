@@ -59,11 +59,13 @@ const getFragmentShader = (modules, main, exportType, options = {}) => {
     }
 
     const maxLength = Math.max(20, ...modules.map(m => m.shaderExport.length))+4;
+    const program = modules.map(module => generateHeader(module.shaderExport, maxLength)+module.shaderProgram).join("\n")
+
     return `
 precision ${options.presision || "mediump"} float;
 varying vec2 vUV;
-uniform sampler2D uTexture;
-\n${modules.map(module => generateHeader(module.shaderExport, maxLength)+module.shaderProgram).join("\n")}
+${program.includes('uTexture') ? "uniform sampler2D uTexture;" : "" }
+\n${program}
 void main() {\n${callExecution}\n}
     `.trim();
 }
