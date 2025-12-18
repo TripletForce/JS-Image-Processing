@@ -1,85 +1,32 @@
-import { Program, Buffer } from "./WebGL_Translation/core.js";
+import { loadImage, Program, Buffer } from "./WebGL_Translation/core.js";
 import DependencyForge from "./WebGL_Translation/dependencyforge.js";
 
 // Opengl Canvas
 const canvas = document.getElementById('display-canvas');
 const gl = canvas.getContext("webgl");
 
-// Assemble the program
-const df = new DependencyForge();
+(async () => {
+    // Load image
+    const image = await loadImage(gl, "./image.png");
 
-df.registerShaderDependency(`
-import random
-export vec4 random_pixels(){
-    float r = random(vUV) > 0.5 ? 1.0 : 0.0;
-    return vec4(r,r,r,1.0);
-}    
-`);
-
-df.registerShaderDependency(`
-uniform vec2 uTexelSize;
-
-float cell(vec2 offset) {
-    return texture2D(uTexture, vUV + (uTexelSize * offset)).x > 0.5 ? 1.0 : 0.0;
+    // Assemble shader
+    const df = new DependencyForge();
+    df.registerShaderDependency(`
+export vec4 red(){
+    return texture2D(uTexture, vUV);
 }
+    `);
 
-export float game_of_life() {
-    float neighbors = 0.0;
+    const code = df.build("red");
 
-    neighbors += cell(vec2( 1.0,  0.0));
-    neighbors += cell(vec2( 1.0,  1.0));
-    neighbors += cell(vec2( 0.0,  1.0));
-    neighbors += cell(vec2(-1.0,  0.0));
-    neighbors += cell(vec2(-1.0, -1.0));
-    neighbors += cell(vec2( 0.0, -1.0));
-    neighbors += cell(vec2( 1.0, -1.0));
-    neighbors += cell(vec2(-1.0,  1.0));
+    // Create program
+    const program = new Program(gl, code);
 
-    float current = cell(vec2(0.0));
-
-    // Death
-    if (current > 0.5 && (neighbors < 2.0 || neighbors > 3.0)) {
-        return 0.0;
-    }
-
-    // Birth
-    if (current < 0.5 && neighbors == 3.0) {
-        return 1.0;
-    }
-
-    return current;
-}
-`);
-
-
-let buff1 = new Buffer(gl, canvas.width, canvas.height);
-let buff2 = new Buffer(gl, canvas.width, canvas.height);
-
-const background_program = new Program(gl, df.build("random_pixels"));
-const game_program = new Program(gl, df.build("game_of_life"));
-const pass_program = new Program(gl, df.build("pass"));
-
-
-background_program.execute(null, buff1, canvas.width, canvas.height);
-
-function render(b){
-    if(b){
-        game_program.execute(buff1, buff2, canvas.width, canvas.height, { uTexelSize: [1/canvas.width, 1/canvas.height] });
-        pass_program.execute(buff2, null, canvas.width, canvas.height);
-    }
-    else{
-        game_program.execute(buff2, buff1, canvas.width, canvas.height, { uTexelSize: [1/canvas.width, 1/canvas.height] });
-        pass_program.execute(buff1, null, canvas.width, canvas.height);
-    }
-}
-
-function a(){
-    render(true);
-    requestAnimationFrame(b)
-}
-function b(){
-    render(false);
-    requestAnimationFrame(a)
-}
-
-requestAnimationFrame(a)
+    // Render image → canvas
+    program.execute(
+        image,                      // src (texture)
+        null,                       // dest (canvas)
+        canvas.clientWidth,
+        canvas.clientHeight
+    );
+})();
