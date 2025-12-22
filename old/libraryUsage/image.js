@@ -9,10 +9,18 @@ const gl = canvas.getContext("webgl");
     // Load image
     const image = await loadImage(gl, "./image.png");
 
-    // Create program
+    // Assemble shader
     const df = new DependencyForge();
-    const code = df.build("pass");
-    const program = new Program(gl, code, true);
+    df.registerShaderDependency(`
+export vec4 red(){
+    return texture2D(uTexture, vUV);
+}
+    `);
+
+    const code = df.build("red");
+
+    // Create program
+    const program = new Program(gl, code);
 
     // Render image → canvas
     program.execute(

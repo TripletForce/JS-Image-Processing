@@ -47,7 +47,7 @@ ShaderPipeline.prototype.executeProgram = function(program, uniform={}, mask=nul
 }
 
 ShaderPipeline.prototype.loadImage = function(src){
-
+    
 }
 
 ShaderPipeline.prototype.sendToCanvas = function(){}

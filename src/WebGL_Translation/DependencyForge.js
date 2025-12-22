@@ -84,9 +84,10 @@ DependencyForge.prototype.registerShaderDependency = function(fSource){
     let shaderImport = [];
 
     // Search for the word "import " or the word "export ", and to the list of dependecies
-    lines = lines.map(line => {
+    lines = lines.map(raw => {
         //Cleanup
-        if(line.trim().length===0) return '';
+        let line = raw.trim();
+        if(raw.length===0) return '';
 
         // use export <functype> <funcname>(<args>){ ... }
         if(line.startsWith('export ')) {
