@@ -6,8 +6,8 @@
  * 
  * You can save / load buffers, as well as loading images.
 */
-import { Program, Buffer } from "./WebGL_Translation/core.js";
-import DependencyForge from "./WebGL_Translation/dependencyforge.js";
+import { Program, Buffer } from "./WebGL_Translation/Core.js";
+import DependencyForge from "./WebGL_Translation/DependencyForge.js";
 
 function ShaderPipeline(gl, width, height){
     this.gl = gl;
@@ -27,7 +27,7 @@ ShaderPipeline.prototype.addDependency = function(code){
     this.df.registerShaderDependency(code);
 }
 
-ShaderPipeline.prototype.executeProgram = function(program, uniform={}, mask=null){
+ShaderPipeline.prototype.executeProgram = function(program, uniforms={}, mask=null){
     // Get the program
     let programObject = null;
     if(Object.keys(this.buildCache).includes(program)){
@@ -39,6 +39,7 @@ ShaderPipeline.prototype.executeProgram = function(program, uniform={}, mask=nul
     }
     
     // TODO: Apply mask
+    if(mask) throw new NotImplementedError("Masking not yet implemented in ShaderPipeline.");
 
     // Run the program
     let outputBuffer = new Buffer(this.gl, this.w, this.h);

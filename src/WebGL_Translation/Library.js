@@ -27,5 +27,26 @@ overload float random(vec4 v){
 export vec4 pass(){
     return texture2D(uTexture, vUV);
 }
+`,
+`
+export float gray_scale(){
+    float gray = 0.2126 * texture2D(uTexture, vUV).r + 0.7152 * texture2D(uTexture, vUV).g + 0.0722 * texture2D(uTexture, vUV).b;
+    return gray;
+}
+`,
+`
+export vec4 convolution(vec2 textelSize, float weights[9]) {
+    vec4 r = vec4(0.0);
+    r += texture2D(uTexture, vUV + textelSize * vec2(-1.0, -1.0)) * weights[0];
+    r += texture2D(uTexture, vUV + textelSize * vec2( 0.0, -1.0)) * weights[1];
+    r += texture2D(uTexture, vUV + textelSize * vec2( 1.0, -1.0)) * weights[2];
+    r += texture2D(uTexture, vUV + textelSize * vec2(-1.0,  0.0)) * weights[3];
+    r += texture2D(uTexture, vUV) * weights[4];
+    r += texture2D(uTexture, vUV + textelSize * vec2( 1.0,  0.0)) * weights[5];
+    r += texture2D(uTexture, vUV + textelSize * vec2(-1.0,  1.0)) * weights[6];
+    r += texture2D(uTexture, vUV + textelSize * vec2( 0.0,  1.0)) * weights[7];
+    r += texture2D(uTexture, vUV + textelSize * vec2( 1.0,  1.0)) * weights[8];
+    return vec4(r.rgb, 1.0);
+}
 `
 ];

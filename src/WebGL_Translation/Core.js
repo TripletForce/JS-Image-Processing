@@ -111,7 +111,7 @@ export function Program(gl, fSource, debug=false) {
         Object.keys(uniforms).forEach(key => {
             const loc = gl.getUniformLocation(program, key);
             const v = uniforms[key];
-
+            
             if (typeof v === "number") {
                 gl.uniform1f(loc, v);
             } else if (v.length === 2) {

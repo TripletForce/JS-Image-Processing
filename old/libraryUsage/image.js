@@ -1,3 +1,7 @@
+
+// loads image.png in base directory and displays it.
+
+
 import { loadImage, Program, Buffer } from "./WebGL_Translation/core.js";
 import DependencyForge from "./WebGL_Translation/dependencyforge.js";
 
