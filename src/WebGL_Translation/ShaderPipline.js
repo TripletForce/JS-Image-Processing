@@ -6,21 +6,27 @@
  * 
  * You can save / load buffers, as well as loading images.
 */
-import { Program, Buffer } from "./WebGL_Translation/Core.js";
-import DependencyForge from "./WebGL_Translation/DependencyForge.js";
+import { Program, Buffer, loadImage } from "./Core.js";
+import DependencyForge from "./DependencyForge.js";
 
-function ShaderPipeline(gl, width, height){
+function ShaderPipeline(gl, canvasWidth, canvasHeight){
     this.gl = gl;
-    this.w = width;
-    this.h = height;
+    this.w = canvasWidth;
+    this.h = canvasHeight;
 
     // The setup uses ping pong buffers.
-    this.currentbuffer = new Buffer(gl, width, height);
+    this.currentbuffer = null;
     this.buffers = {};
 
     // The programs, which can be cached.
     this.df = new DependencyForge();
     this.buildCache = {};
+
+    // The pass through program
+    this._passProgram = new Program(this.gl, this.df.build('pass'));
+
+    // This is for saving / loading buffers
+    this.savedBuffers = {};
 }
 
 ShaderPipeline.prototype.addDependency = function(code){
@@ -43,15 +49,66 @@ ShaderPipeline.prototype.executeProgram = function(program, uniforms={}, mask=nu
 
     // Run the program
     let outputBuffer = new Buffer(this.gl, this.w, this.h);
-    programObject.executeProgram(this.currentbuffer, outputBuffer, this.w, this.h, uniforms);
+    programObject.execute(this.currentbuffer, outputBuffer, this.w, this.h, uniforms);
     this.currentbuffer = outputBuffer;
 }
 
-ShaderPipeline.prototype.loadImage = function(src){
-    
+ShaderPipeline.prototype.loadImage = async function(src){
+    this.currentbuffer = await loadImage(this.gl, src);
 }
 
-ShaderPipeline.prototype.sendToCanvas = function(){}
+ShaderPipeline.prototype.sendToCanvas = function(){
+    this._passProgram.execute(this.currentbuffer, null, this.w, this.h);
+}
 
-ShaderPipeline.prototype.bufferSave = function(name){}
-ShaderPipeline.prototype.bufferLoad = function(name){}
+ShaderPipeline.prototype.bufferSave = function(name){
+    this.savedBuffers[name] = this.currentbuffer;
+}
+
+ShaderPipeline.prototype.bufferLoad = function(name){
+    if(!Object.keys(this.savedBuffers).includes(name)){
+        throw new Error(`No saved buffer with name ${name}`);
+    }
+    this.currentbuffer = this.savedBuffers[name];
+}
+
+
+export default new Proxy(ShaderPipeline, {
+  construct(target, args, newTarget) {
+        console.log(args)
+    function createQueuedPipeline(pipeline) {
+      const queue = [];
+
+      return new Proxy(pipeline, {
+        get(target, prop, receiver) {
+
+          // submit executes immediately
+          if (prop === "submit") {
+            return async function () {
+              for (const task of queue) {
+                await task();
+              }
+              queue.length = 0;
+            };
+          }
+
+          const value = target[prop];
+
+          // allow normal property access
+          if (typeof value !== "function") {
+            return value;
+          }
+
+          // queue method calls
+          return function (...args) {
+            queue.push(() => value.apply(target, args));
+            return receiver;
+          };
+        }
+      });
+    }
+
+    const instance = Reflect.construct(target, args, newTarget);
+    return createQueuedPipeline(instance);
+  }
+});

@@ -15,18 +15,21 @@ uniform float uHeight;
 export vec4 edge_detection() {
     vec2 texel = vec2(1.0 / uWidth, 1.0 / uHeight);
 
-    float weights[9]; 
-    weights[0] = 1.0; 
-    weights[1] = 1.0; 
-    weights[2] = 1.0; 
-    weights[3] = 1.0; 
-    weights[4] = -8.0; 
-    weights[5] = 1.0; 
-    weights[6] = 1.0; 
-    weights[7] = 1.0; 
-    weights[8] = 1.0;
+    const mat3 verticalWeights = mat3(
+        1.0,  1.0,  1.0,
+        0.0,  0.0,  0.0,
+        -1.0, -1.0, -1.0
+    );
 
-    return convolution(texel, weights);
+    const mat3 horizontalWeights = mat3(
+        1.0,  0.0,  -1.0,
+        1.0,  0.0,  -1.0,
+        1.0,  0.0,  -1.0
+    );
+
+    vec4 verticlalEdges = convolution(texel, verticalWeights);
+    vec4 horizontalEdges = convolution(texel, horizontalWeights);
+    return abs(verticlalEdges) + abs(horizontalEdges);
 }
 `);
 
@@ -35,20 +38,10 @@ export vec4 edge_detection() {
     const image = await loadImage(gl, "./lego.png");
 
     // Run program
-    const grayScale = new Program(gl, df.build("gray_scale"));
     const edgeDetect = new Program(gl, df.build("edge_detection"), true);
 
-    let buffer = new Buffer(gl, image.width, image.height);
-
-    grayScale.execute(
-        image,
-        buffer,
-        image.width,
-        image.height
-    );
-
     edgeDetect.execute(
-        buffer,
+        image,
         null,
         canvas.clientWidth,
         canvas.clientHeight,
