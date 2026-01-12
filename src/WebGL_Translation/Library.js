@@ -35,17 +35,17 @@ export float gray_scale(){
 }
 `,
 `
-export vec4 convolution(vec2 textelSize, mat3 weights) {
+export vec4 convolution(mat3 weights) {
     vec4 r = vec4(0.0);
-    r += texture2D(uTexture, vUV + textelSize * vec2(-1.0, -1.0)) * weights[0][0];
-    r += texture2D(uTexture, vUV + textelSize * vec2( 0.0, -1.0)) * weights[0][1];
-    r += texture2D(uTexture, vUV + textelSize * vec2( 1.0, -1.0)) * weights[0][2];
-    r += texture2D(uTexture, vUV + textelSize * vec2(-1.0,  0.0)) * weights[1][0];
+    r += texture2D(uTexture, vUV + uTexelSize * vec2(-1.0, -1.0)) * weights[0][0];
+    r += texture2D(uTexture, vUV + uTexelSize * vec2( 0.0, -1.0)) * weights[0][1];
+    r += texture2D(uTexture, vUV + uTexelSize * vec2( 1.0, -1.0)) * weights[0][2];
+    r += texture2D(uTexture, vUV + uTexelSize * vec2(-1.0,  0.0)) * weights[1][0];
     r += texture2D(uTexture, vUV) * weights[1][1];
-    r += texture2D(uTexture, vUV + textelSize * vec2( 1.0,  0.0)) * weights[1][2];
-    r += texture2D(uTexture, vUV + textelSize * vec2(-1.0,  1.0)) * weights[2][0];
-    r += texture2D(uTexture, vUV + textelSize * vec2( 0.0,  1.0)) * weights[2][1];
-    r += texture2D(uTexture, vUV + textelSize * vec2( 1.0,  1.0)) * weights[2][2];
+    r += texture2D(uTexture, vUV + uTexelSize * vec2( 1.0,  0.0)) * weights[1][2];
+    r += texture2D(uTexture, vUV + uTexelSize * vec2(-1.0,  1.0)) * weights[2][0];
+    r += texture2D(uTexture, vUV + uTexelSize * vec2( 0.0,  1.0)) * weights[2][1];
+    r += texture2D(uTexture, vUV + uTexelSize * vec2( 1.0,  1.0)) * weights[2][2];
     return vec4(r.rgb, 1.0);
 }
 `

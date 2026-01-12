@@ -10,72 +10,71 @@ import { Program, Buffer, loadImage } from "./Core.js";
 import DependencyForge from "./DependencyForge.js";
 
 function ShaderPipeline(gl, canvasWidth, canvasHeight){
-    this.gl = gl;
-    this.w = canvasWidth;
-    this.h = canvasHeight;
+  this.gl = gl;
+  this.w = canvasWidth;
+  this.h = canvasHeight;
 
-    // The setup uses ping pong buffers.
-    this.currentbuffer = null;
-    this.buffers = {};
+  // The setup uses ping pong buffers.
+  this.currentbuffer = null;
+  this.buffers = {};
 
-    // The programs, which can be cached.
-    this.df = new DependencyForge();
-    this.buildCache = {};
+  // The programs, which can be cached.
+  this.df = new DependencyForge();
+  this.buildCache = {};
 
-    // The pass through program
-    this._passProgram = new Program(this.gl, this.df.build('pass'));
+  // The pass through program
+  this._passProgram = new Program(this.gl, this.df.build('pass'));
 
-    // This is for saving / loading buffers
-    this.savedBuffers = {};
+  // This is for saving / loading buffers
+  this.savedBuffers = {};
 }
 
 ShaderPipeline.prototype.addDependency = function(code){
-    this.df.registerShaderDependency(code);
+  this.df.registerShaderDependency(code);
 }
 
 ShaderPipeline.prototype.executeProgram = function(program, uniforms={}, mask=null){
-    // Get the program
-    let programObject = null;
-    if(Object.keys(this.buildCache).includes(program)){
-        programObject = this.buildCache[program];
-    }
-    else {
-        programObject = new Program(this.gl, this.df.build(program));
-        this.buildCache[program] = programObject;
-    }
-    
-    // TODO: Apply mask
-    if(mask) throw new NotImplementedError("Masking not yet implemented in ShaderPipeline.");
+  // Get the program
+  let programObject = null;
+  if(Object.keys(this.buildCache).includes(program)){
+    programObject = this.buildCache[program];
+  }
+  else {
+    programObject = new Program(this.gl, this.df.build(program));
+    this.buildCache[program] = programObject;
+  }
+  
+  // TODO: Apply mask
+  if(mask) throw new NotImplementedError("Masking not yet implemented in ShaderPipeline.");
 
-    // Run the program
-    let outputBuffer = new Buffer(this.gl, this.w, this.h);
-    programObject.execute(this.currentbuffer, outputBuffer, this.w, this.h, uniforms);
-    this.currentbuffer = outputBuffer;
+  // Run the program
+  let outputBuffer = new Buffer(this.gl, this.w, this.h);
+  programObject.execute(this.currentbuffer, outputBuffer, this.w, this.h, uniforms);
+  this.currentbuffer = outputBuffer;
 }
 
 ShaderPipeline.prototype.loadImage = async function(src){
-    this.currentbuffer = await loadImage(this.gl, src);
+  this.currentbuffer = await loadImage(this.gl, src);
 }
 
 ShaderPipeline.prototype.sendToCanvas = function(){
-    this._passProgram.execute(this.currentbuffer, null, this.w, this.h);
+  this._passProgram.execute(this.currentbuffer, null, this.w, this.h);
 }
 
 ShaderPipeline.prototype.bufferSave = function(name){
-    this.savedBuffers[name] = this.currentbuffer;
+  this.savedBuffers[name] = this.currentbuffer;
 }
 
 ShaderPipeline.prototype.bufferLoad = function(name){
-    if(!Object.keys(this.savedBuffers).includes(name)){
-        throw new Error(`No saved buffer with name ${name}`);
-    }
-    this.currentbuffer = this.savedBuffers[name];
+  if(!Object.keys(this.savedBuffers).includes(name)){
+    throw new Error(`No saved buffer with name ${name}`);
+  }
+  this.currentbuffer = this.savedBuffers[name];
 }
 
 
 export default new Proxy(ShaderPipeline, {
   construct(target, args, newTarget) {
-        console.log(args)
     function createQueuedPipeline(pipeline) {
       const queue = [];
 

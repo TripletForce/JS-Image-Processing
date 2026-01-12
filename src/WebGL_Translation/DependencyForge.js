@@ -46,7 +46,7 @@ const getFragmentShader = (modules, main, exportType, options = {}) => {
             break;
         case 'vec2':
             callExecution = `vec2 v = ${main}();\n\tgl_FragColor = vec4(v,0.0,1.0);`
-        case 'vec2':
+        case 'vec3':
             callExecution = `vec2 v = ${main}();\n\tgl_FragColor = vec4(v,1.0);`
         case 'vec4':
             callExecution = `\tgl_FragColor = ${main}();`;
@@ -62,9 +62,9 @@ const getFragmentShader = (modules, main, exportType, options = {}) => {
     const program = modules.map(module => generateHeader(module.shaderExport, maxLength)+module.shaderProgram).join("\n")
 
     return `
-precision ${options.presision || "mediump"} float;
+precision ${options.precision || "mediump"} float;
 varying vec2 vUV;
-${program.includes('uTexture') ? "uniform sampler2D uTexture;" : "" }
+${program.includes('uTexture') ? "uniform vec2 uTexelSize;\nuniform sampler2D uTexture;" : "" }
 \n${program}
 void main() {\n${callExecution}\n}
     `.trim();

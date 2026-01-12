@@ -102,9 +102,17 @@ export function Program(gl, fSource, debug=false) {
         
         // Bind input texture
         if(src){
+            // Set the texture
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, src.texture); // input texture - TEXTURE0
             gl.uniform1i(gl.getUniformLocation(program, "uTexture"), 0);
+
+            // Set textel size
+            const location = gl.getUniformLocation(program, "uTexelSize");
+            console.log(src);
+            if (location !== null) {
+                gl.uniform2f(location, 1/src.width, 1/src.height);
+            }
         }
 
         // Set uniforms. All uniforms must be set here.
@@ -150,8 +158,11 @@ export function Buffer(gl, width, height) {
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null); // Back to default framebuffer
 
+    // Set the information for the class 
     this.fbo = fbo;
     this.texture = texture;
+    this.width = width;
+    this.height = height;
 }
 
 export function loadImage(gl, src, flipY = true) {
