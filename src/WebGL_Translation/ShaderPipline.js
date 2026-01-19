@@ -6,7 +6,7 @@
  * 
  * You can save / load buffers, as well as loading images.
 */
-import { Program, Buffer, loadImage } from "./Core.js";
+import { Program, Buffer, loadImage, writeImage } from "./Core.js";
 import DependencyForge from "./DependencyForge.js";
 
 function ShaderPipeline(gl, canvasWidth, canvasHeight){
@@ -15,7 +15,8 @@ function ShaderPipeline(gl, canvasWidth, canvasHeight){
   this.h = canvasHeight;
 
   // The setup uses ping pong buffers.
-  this.currentbuffer = null;
+  this.currentbuffer = new Buffer(this.gl, this.w, this.h);
+  this.reservebuffer = new Buffer(this.gl, this.w, this.h);
   this.buffers = {};
 
   // The programs, which can be cached.
@@ -48,13 +49,16 @@ ShaderPipeline.prototype.executeProgram = function(program, uniforms={}, mask=nu
   if(mask) throw new NotImplementedError("Masking not yet implemented in ShaderPipeline.");
 
   // Run the program
-  let outputBuffer = new Buffer(this.gl, this.w, this.h);
-  programObject.execute(this.currentbuffer, outputBuffer, this.w, this.h, uniforms);
-  this.currentbuffer = outputBuffer;
+  programObject.execute(this.currentbuffer, this.reservebuffer, this.w, this.h, uniforms);
+  this.currentbuffer = this.reservebuffer;
 }
 
 ShaderPipeline.prototype.loadImage = async function(src){
   this.currentbuffer = await loadImage(this.gl, src);
+}
+
+ShaderPipeline.prototype.sendToBuffer = function(src){
+  this.currentbuffer = writeImage(this.gl, src);
 }
 
 ShaderPipeline.prototype.sendToCanvas = function(){
