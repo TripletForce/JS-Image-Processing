@@ -50,7 +50,11 @@ ShaderPipeline.prototype.executeProgram = function(program, uniforms={}, mask=nu
 
   // Run the program
   programObject.execute(this.currentbuffer, this.reservebuffer, this.w, this.h, uniforms);
+  
+  // Swap
+  const temp = this.currentbuffer;
   this.currentbuffer = this.reservebuffer;
+  this.reservebuffer = temp;
 }
 
 ShaderPipeline.prototype.loadImage = async function(src){
@@ -76,42 +80,4 @@ ShaderPipeline.prototype.bufferLoad = function(name){
   this.currentbuffer = this.savedBuffers[name];
 }
 
-
-export default new Proxy(ShaderPipeline, {
-  construct(target, args, newTarget) {
-    function createQueuedPipeline(pipeline) {
-      const queue = [];
-
-      return new Proxy(pipeline, {
-        get(target, prop, receiver) {
-
-          // submit executes immediately
-          if (prop === "submit") {
-            return async function () {
-              for (const task of queue) {
-                await task();
-              }
-              queue.length = 0;
-            };
-          }
-
-          const value = target[prop];
-
-          // allow normal property access
-          if (typeof value !== "function") {
-            return value;
-          }
-
-          // queue method calls
-          return function (...args) {
-            queue.push(() => value.apply(target, args));
-            return receiver;
-          };
-        }
-      });
-    }
-
-    const instance = Reflect.construct(target, args, newTarget);
-    return createQueuedPipeline(instance);
-  }
-});
+export default ShaderPipeline;

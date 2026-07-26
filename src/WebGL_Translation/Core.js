@@ -109,7 +109,6 @@ export function Program(gl, fSource, debug=false) {
 
             // Set textel size
             const location = gl.getUniformLocation(program, "uTexelSize");
-            console.log(src);
             if (location !== null) {
                 gl.uniform2f(location, 1/src.width, 1/src.height);
             }
