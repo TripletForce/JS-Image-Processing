@@ -1,0 +1,47 @@
+/*Color Scheme*/
+:root {
+  --sub-bg-color: rgb(37, 37, 37);
+  --main-bg-color: rgb(17, 17, 17);
+}
+
+/*Main Background*/
+body{
+  margin: 0px;
+  padding: 0px;
+  background-color: black;
+  font-family: "Lucida Console", "Courier New", monospace;
+  overflow: hidden;
+}
+#divSvg{
+  background-color: black;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Chrome ect. */
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  box-shadow: none; 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: rgb(20, 20, 20); 
+  border-radius: 13px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(0, 0, 0); 
+}
+
+#rightSelect{
+	position: fixed;
+	background-color: rgb(0, 0, 0);
+}

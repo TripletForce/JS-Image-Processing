@@ -1,3 +1,5 @@
+/*
+
 import ShaderPipeline from './WebGL_Translation/ShaderPipline.js';
 
 const canvas = document.getElementById('display-canvas');
@@ -90,3 +92,8 @@ function frame(){
 }
 frame();
 
+
+
+// displays on element 					<canvas id="display-canvas" width="700" height="500"></canvas>
+
+*/
