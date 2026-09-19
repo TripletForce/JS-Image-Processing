@@ -1,2 +1,5 @@
-import './Viewer.js'
-import './Print.js'
+
+//import './Print.js'
+import View from './View.js'
+
+new View();

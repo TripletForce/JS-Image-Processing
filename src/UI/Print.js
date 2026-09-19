@@ -75,10 +75,6 @@ function print(){
     let rect = getCompleteViewBox();
     let pages = splitIntoPages(rect.x, rect.y, rect.width, rect.height);
 
-
-    
-
-
     // Create HTML page if print
     const printWindow = window.open("", "_blank");
     printWindow.document.write(`
